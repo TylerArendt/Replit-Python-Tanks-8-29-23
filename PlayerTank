@@ -1,0 +1,72 @@
+import turtle
+import Projectile
+import math
+import time
+
+b = 0
+target_coords = (340, -160)
+
+
+#new tank and draw barrel
+def newTank(me):
+  t = turtle.Turtle()
+  t.shape(me)
+  t.turtlesize(1)
+  t.penup()
+  t.goto(-350, -160)
+
+  global b
+  b = turtle.Turtle()
+  b.penup()
+  b.hideturtle()
+  b.width(3)
+  drawbarrel(0, 0)
+  return t
+
+
+def drawbarrel(angle, mypower):
+  turtle.tracer(0, 0)
+  global b, p
+  b.clear()
+  b.color((mypower, 0, 0))
+  b.showturtle()
+  b.goto(-337, -152)
+  b.penup()
+  b.seth(0)
+  b.left(angle)
+  b.forward(5)
+  b.pendown()
+  b.forward(25)
+  b.penup()
+  b.hideturtle()
+  turtle.tracer(1, 0)
+
+
+def fire(projectile, myTheta, myV0):
+  # new projectile
+  p = Projectile.newProjectile(projectile, -350, -160, myTheta, myV0)
+  #while on screen
+  while p.xcor() > -370 and p.xcor() < 370 and p.ycor() > -180:
+    #increment time
+    p.time = p.time + .2
+    #calculate position
+    xPos = p.x0 + p.v0 * math.cos(p.heading() * math.pi / 180) * p.time
+    yPos = p.y0 + p.v0 * math.sin(
+      p.heading() * math.pi / 180) * p.time - .5 * 9.8 * p.time * p.time
+    # go to new position and update
+    p.goto(xPos, yPos)
+    turtle.update()
+    #if in hitbox register hit
+    if abs(p.xcor() - target_coords[0]) < 40 and abs(p.ycor() -
+                                                     target_coords[1]) < 30:
+      p.hideturtle()
+      return True
+      #wait until next update
+    time.sleep(.05)
+  #if not hit register not hit
+  p.hideturtle()
+  return False
+
+
+def erasebarrel():
+  b.clear()
