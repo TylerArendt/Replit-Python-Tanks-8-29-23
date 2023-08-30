@@ -1,80 +1,114 @@
 import turtle
-import Projectile
-import math
+import playerTank
+import enemyTank
 import time
-import random
 
-b = 0
-theta = 90
-targetCoeff = 1
-target_coords = (-350, -160)
+screen = turtle.Screen()
+screen.setup(800, 400)
+screen.colormode(255)
+turtle.bgcolor('grey')
 
+turtle.tracer(0, 0)
 
-def newTank(me):
-  t = turtle.Turtle()
-  t.shape(me)
-  t.turtlesize(1)
-  t.penup()
-  t.goto(340, -160)
+me = "mytank.gif"
+screen.addshape(me)
 
-  global b
-  b = turtle.Turtle()
-  b.penup()
-  b.hideturtle()
-  b.width(3)
-  drawbarrel(180)
-  return t
-  
-def drawbarrel(angle): 
-  turtle.tracer(0, 0)
-  global b
-  b.clear()
-  b.showturtle()
-  b.goto(326, -153)
-  b.penup()
-  b.seth(angle)
-  b.forward(5)
-  b.pendown()
-  b.forward(25)
-  b.penup()
-  b.hideturtle()
-  turtle.tracer(1, 0)
+enemy = "enemytank.gif"
+screen.addshape(enemy)
+
+explosion = "Explosion.gif"
+screen.addshape(explosion)
+
+projectile = "Projectile.gif"
+screen.addshape(projectile)
+
+enemyAmmo = 'EnemyProjectile.gif'
+screen.addshape(enemyAmmo)
+
+t = playerTank.newTank(me)
+e = enemyTank.newTank(enemy)
+
+myTheta = 40
+myV0 = 100
+go = False
+
+playerTank.drawbarrel(myTheta, myV0)
+
+turtle.update()
 
 
-def fire(projectile):
-  #randomly generate theta based on split search
-  global theta, targetCoeff
-  #if targetCoeff registers if last shot was too low or high
-  #eventually narrows onto spot
-  theta = theta + random.randint(0, 50) * targetCoeff
-  if theta > 180:
-    theta = 180
-  if theta < 90:
-    theta = 90
-  drawbarrel(theta)
+def angleup():
+  global myTheta, go, myV0
+  if not go:
+    go = True
+    while go and myTheta < 91:
+      myTheta = myTheta + 3
+      playerTank.drawbarrel(myTheta, myV0)
+      turtle.update()
+      time.sleep(.1)
+
+
+def angledown():
+  global myTheta, go, myV0
+  if not go:
+    go = True
+    while go and myTheta > -25:
+      myTheta = myTheta - 3
+      playerTank.drawbarrel(myTheta, myV0)
+      turtle.update()
+      time.sleep(.1)
+
+
+def reset():
+  global go
+  go = False
+
+
+def powerup():
+  global myV0, go
+  myV0 = myV0 + 3
+  if myV0 > 255:
+    myV0 = 255
+  playerTank.drawbarrel(myTheta, myV0)
   turtle.update()
-  #new projectile fire projectile; see playerTank fire for more details
-  p = Projectile.newProjectile(projectile, 330, -160, theta, 100)
-  while p.xcor() > -370 and p.xcor() < 370 and p.ycor() > -180:
-    p.time = p.time + .2
-    xPos = p.x0 + p.v0 * math.cos(p.heading() * math.pi / 180) * p.time
-    yPos = p.y0 + p.v0 * math.sin(
-      p.heading() * math.pi / 180) * p.time - .5 * 9.8 * p.time * p.time
-    p.goto(xPos, yPos)
-    turtle.update()
-    time.sleep(.05)
-    if abs(p.xcor() - target_coords[0]) < 40 and abs(p.ycor() -
-                                                     target_coords[1]) < 30:
-      p.hideturtle()
-      return True
-  #check whether projectile is too high or low, adjust coeff to modify next trajectory accordingly
-  if p.xcor() > target_coords[0]:
-    targetCoeff = -1
-  if p.ycor() > target_coords[1]:
-    targetCoeff = 1
-  p.hideturtle()
-  return False
 
 
-def erasebarrel():
-  b.clear()
+def powerdown():
+  global myV0, go
+  myV0 = myV0 - 3
+  if myV0 < 0:
+    myV0 = 0
+  playerTank.drawbarrel(myTheta, myV0)
+  turtle.update()
+
+
+def fire(): # fires the player tank
+  global myTheta, myV0, projectile, go, enemyAmmo
+  if not go:
+    go = True
+    result = playerTank.fire(projectile, myTheta, myV0)
+    if result == True:
+      enemyTank.erasebarrel()
+      e.shape(explosion)
+    else:
+      result = enemyTank.fire(enemyAmmo)
+      if result == True:
+        playerTank.erasebarrel()
+        t.shape(explosion)
+        
+
+    go = False
+
+
+turtle.onkeypress(angleup, "Left")
+turtle.onkeypress(angledown, "Right")
+turtle.onkeyrelease(reset, "Left")
+turtle.onkeyrelease(reset, "Right")
+turtle.onkeypress(powerup, "Up")
+turtle.onkeyrelease(reset, "Up")
+turtle.onkeypress(powerdown, "Down")
+turtle.onkeyrelease(reset, "Down")
+turtle.onkeypress(fire, "space")
+
+turtle.listen()
+turtle.done()
